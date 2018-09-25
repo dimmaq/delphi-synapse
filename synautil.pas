@@ -265,7 +265,7 @@ function IntToBin(Value: Integer; Digits: Byte): AnsiString;
 function BinToInt(const Value: AnsiString): Integer;
 
 {:Parses a URL to its various components.}
-function ParseURL(URL: AnsiString; var Prot, User, Pass, Host, Port, Path,
+function ParseURL(const URL, APortDef: AnsiString; var Prot, User, Pass, Host, Port, Path,
   Para: AnsiString): AnsiString;
 
 
@@ -1375,7 +1375,7 @@ begin
 end;
 
 {==============================================================================}
-function ParseURL(URL: AnsiString; var Prot, User, Pass, Host, Port, Path,
+function ParseURL(const URL, APortDef: AnsiString; var Prot, User, Pass, Host, Port, Path,
   Para: AnsiString): AnsiString;
 var
   x, y: Integer;
@@ -1386,7 +1386,7 @@ begin
   Prot := 'http';
   User := '';
   Pass := '';
-  Port := '80';
+  Port := APortDef;
   Para := '';
 
   x := Pos('://', URL);
@@ -1397,9 +1397,17 @@ begin
   end
   else
     sURL := URL;
-  if UpperCase(Prot) = 'HTTPS' then
-    Port := '443';
-  if UpperCase(Prot) = 'FTP' then
+  s := UpperCase(Prot);
+  if s = 'HTTPS' then
+    Port := '443'
+  else
+  if s = 'WS' then
+    Port := '80'
+  else
+  if s = 'WSS' then
+    Port := '443'
+  else
+  if s = 'FTP' then
     Port := '21';
   x := Pos('@', sURL);
   y := Pos('/', sURL);
