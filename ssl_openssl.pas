@@ -101,7 +101,7 @@ type
   protected
     FSsl: PSSL;
     Fctx: PSSL_CTX;
-    function SSLCheck: Boolean;
+    function SSLCheck(AError: Integer = 0): Boolean;
     function SetSslKeys: boolean;
     function Init(server:Boolean): Boolean;
     function DeInit: Boolean;
@@ -202,7 +202,7 @@ begin
   Result := 'ssl_openssl';
 end;
 
-function TSSLOpenSSL.SSLCheck: Boolean;
+function TSSLOpenSSL.SSLCheck(AError: Integer): Boolean;
 var
 {$IFDEF CIL}
   sb: StringBuilder;
@@ -211,7 +211,10 @@ var
 begin
   Result := true;
   FLastErrorDesc := '';
-  FLastError := ErrGetError;
+  if AError <> 0 then
+    FLastError := AError
+  else
+    FLastError := ErrGetError;
   ErrClearError;
   if FLastError <> 0 then
   begin
@@ -221,9 +224,21 @@ begin
     ErrErrorString(FLastError, sb, 256);
     FLastErrorDesc := Trim(sb.ToString);
 {$ELSE}
-    s := StringOfChar(AnsiChar(#0), 256);
-    ErrErrorString(FLastError, s, Length(s));
-    FLastErrorDesc := string(s); // cast
+    {$IFDEF WINDOWS}
+      if FLastError = SSL_ERROR_SYSCALL then
+      begin
+        FLastErrorDesc := '#openssl ' + SysUtils.IntToStr(FLastError)
+            + ' ' + string(SysErrorMessage(WSAGetLastError()))  // cast
+      end;
+    {$ELSE}
+    {$ENDIF}
+    if FLastErrorDesc = '' then
+    begin
+      s := StringOfChar(AnsiChar(#0), 256);
+      ErrErrorString(FLastError, s, Length(s));
+      FLastErrorDesc := '#openssl ' + SysUtils.IntToStr(FLastError)
+          + ' ' + string(s); // cast
+    end
 {$ENDIF}
   end;
 end;
@@ -638,7 +653,9 @@ begin
     Result := 0
   else
     if (err <> 0) then
-      FLastError := err;
+      begin
+        SSLCheck(err)
+      end;
 end;
 
 function TSSLOpenSSL.RecvBuffer(Buffer: TMemory; Len: Integer): Integer;
@@ -671,8 +688,11 @@ begin
   {pf}// Verze 1.1.0 byla s else tak jak to ted mam,
       // ve verzi 1.1.1 bylo ELSE zruseno, ale pak je SSL_ERROR_ZERO_RETURN
       // propagovano jako Chyba.
-  {pf} else {/pf} if (err <> 0) then   
-    FLastError := err;
+  {pf} else {/pf}
+        if (err <> 0) then
+        begin
+          SSLCheck(err)
+        end;
 end;
 
 function TSSLOpenSSL.WaitingData: Integer;

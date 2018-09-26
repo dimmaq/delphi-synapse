@@ -3875,6 +3875,7 @@ begin
   Result := inherited GetErrorDescEx;
   if (FLastError = WSASYSNOTREADY) and (self.SSL.LastError <> 0) then
   begin
+    // FLastError := self.SSL.LastError;  conflict "ssl error" vs "socket error"  ???
     Result := self.SSL.LastErrorDesc;
   end;
 end;
