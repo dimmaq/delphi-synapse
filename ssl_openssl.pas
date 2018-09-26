@@ -208,6 +208,7 @@ var
   sb: StringBuilder;
 {$ENDIF}
   s : AnsiString;
+  se: Integer;
 begin
   Result := true;
   FLastErrorDesc := '';
@@ -224,19 +225,21 @@ begin
     ErrErrorString(FLastError, sb, 256);
     FLastErrorDesc := Trim(sb.ToString);
 {$ELSE}
-    {$IFDEF WINDOWS}
+    //{$IFDEF WIN???}
       if FLastError = SSL_ERROR_SYSCALL then
       begin
-        FLastErrorDesc := '#openssl ' + SysUtils.IntToStr(FLastError)
-            + ' ' + string(SysErrorMessage(WSAGetLastError()))  // cast
+        se := WSAGetLastError();
+        FLastErrorDesc := '#sslErr:' + SysUtils.IntToStr(FLastError)
+            + ' #sysErr:' + SysUtils.IntToStr(se)
+            + ' ' + string(TBlockSocket.GetErrorDesc(se))  // cast
       end;
-    {$ELSE}
-    {$ENDIF}
+    //{$ELSE}
+    //{$ENDIF}
     if FLastErrorDesc = '' then
     begin
       s := StringOfChar(AnsiChar(#0), 256);
       ErrErrorString(FLastError, s, Length(s));
-      FLastErrorDesc := '#openssl ' + SysUtils.IntToStr(FLastError)
+      FLastErrorDesc := '#sslErr:' + SysUtils.IntToStr(FLastError)
           + ' ' + string(s); // cast
     end
 {$ENDIF}
