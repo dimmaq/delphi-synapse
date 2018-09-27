@@ -80,7 +80,7 @@ uses
 {$IFDEF CIL}
   System.IO,
 {$ENDIF}
-  SysUtils, Classes, SynaFpc;
+  SysUtils, SysConst, Classes, SynaFpc;
 
 {$IFDEF VER100}
 type
@@ -105,11 +105,13 @@ function UpperCase(const S: AnsiString): AnsiString;
 function LowerCase(const S: AnsiString): AnsiString;
 function Format(const Format: AnsiString; const Args: array of const): AnsiString;
 function FormatDateTime(const Format: string; const DateTime: TDateTime): AnsiString;
-function StrToIntDef(const S: AnsiString; const ADef: Integer): Integer;
 function IntToHex(Value: Integer; Digits: Integer): AnsiString;
 function StrToTime(const S: AnsiString): TDateTime;
 function Trim(const S: AnsiString): AnsiString;
 function IntToStr(const I: Integer): AnsiString;
+function TryStrToInt(const S: AnsiString; var I: Integer): Boolean;
+function StrToInt(const S: AnsiString): Integer;
+function StrToIntDef(const S: AnsiString; const ADef: Integer): Integer;
 function LastDelimiter(const Delimiters, S: AnsiString): Integer;
 
 {:Return your timezone bias from UTC time in minutes.}
@@ -265,10 +267,8 @@ function IntToBin(Value: Integer; Digits: Byte): AnsiString;
 function BinToInt(const Value: AnsiString): Integer;
 
 {:Parses a URL to its various components.}
-function ParseURL(const URL, APortDef: AnsiString; var Prot, User, Pass, Host, Port, Path,
+function ParseURL(const URL: AnsiString; var Prot, User, Pass, Host, Port, Path,
   Para: AnsiString): AnsiString;
-
-
 
 {:Replaces all "Search" string values found within "Value" string, with the
  "Replace" string value.}
@@ -393,7 +393,10 @@ var
 
 implementation
 
-{$IFDEF UNICODE}uses AnsiStrings;{$ENDIF}
+uses
+  {$IFDEF UNICODE}AnsiStrings,{$ENDIF}
+  //
+  AcedCommon, AcedStrings;
 
 function Pos(const ASub, AStr: AnsiString): Integer;
 begin
@@ -430,14 +433,10 @@ begin
   Result := AnsiString(SysUtils.FormatDateTime(Format,  DateTime)) // cast
 end;
 
-function StrToIntDef(const S: AnsiString; const ADef: Integer): Integer;
-begin
-  Result := SysUtils.StrToIntDef(string(S), ADef)  // cast
-end;
-
 function IntToHex(Value: Integer; Digits: Integer): AnsiString;
 begin
-  Result := AnsiString(SysUtils.IntToHex(Value, Digits)) // cast
+  Result := G_UIntToHex(Value, Digits)
+//  Result := AnsiString(SysUtils.IntToHex(Value, Digits)) // cast
 end;
 
 function StrToTime(const S: AnsiString): TDateTime;
@@ -447,12 +446,30 @@ end;
 
 function Trim(const S: AnsiString): AnsiString;
 begin
-    Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}Trim(S)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}Trim(S)
 end;
 
 function IntToStr(const I: Integer): AnsiString;
 begin
   System.Str(I, Result);
+end;
+
+function TryStrToInt(const S: AnsiString; var I: Integer): Boolean;
+begin
+  Result := G_StrTo_Integer(S, I)
+end;
+
+function StrToInt(const S: AnsiString): Integer;
+begin
+  if not TryStrToInt(S, Result) then
+    raise EConvertError.CreateResFmt(@SInvalidInteger, [S]);
+end;
+
+function StrToIntDef(const S: AnsiString; const ADef: Integer): Integer;
+begin
+  if not TryStrToInt(S, Result) then
+    Result := ADef
+//  Result := SysUtils.StrToIntDef(string(S), ADef)  // cast
 end;
 
 function LastDelimiter(const Delimiters, S: AnsiString): Integer;
@@ -1375,18 +1392,19 @@ begin
 end;
 
 {==============================================================================}
-function ParseURL(const URL, APortDef: AnsiString; var Prot, User, Pass, Host, Port, Path,
+function ParseURL(const URL: AnsiString; var Prot, User, Pass, Host, Port, Path,
   Para: AnsiString): AnsiString;
 var
   x, y: Integer;
   sURL: AnsiString;
-  s: AnsiString;
-  s1, s2: AnsiString;
+  s, s1, s2: AnsiString;
 begin
   Prot := 'http';
   User := '';
   Pass := '';
-  Port := APortDef;
+  Host := '';
+  Port := '';
+  Path := '';
   Para := '';
 
   x := Pos('://', URL);
