@@ -80,7 +80,10 @@ uses
 {$IFDEF CIL}
   System.IO,
 {$ENDIF}
-  SysUtils, SysConst, Classes, SynaFpc;
+  SysUtils, SysConst, Classes, SynaFpc,
+  //
+  uAnsiStringList
+  ;
 
 {$IFDEF VER100}
 type
@@ -357,7 +360,7 @@ function XorString(Indata1, Indata2: AnsiString): AnsiString;
 
 {:Read header from "Value" stringlist beginning at "Index" position. If header
  is Splitted into multiple lines, then this procedure de-split it into one line.}
-function NormalizeHeader(Value: TStrings; var Index: Integer): AnsiString;
+function NormalizeHeader(Value: TAnsiStrings; var Index: Integer): AnsiString;
 
 {pf}
 {:Search for one of line terminators CR, LF or NUL. Return position of the
@@ -1985,9 +1988,9 @@ end;
 
 {==============================================================================}
 
-function NormalizeHeader(Value: TStrings; var Index: Integer): AnsiString;
+function NormalizeHeader(Value: TAnsiStrings; var Index: Integer): AnsiString;
 var
-  s, t: string;
+  s, t: AnsiString;
   n: Integer;
 begin
   s := Value[Index];
@@ -2005,11 +2008,11 @@ begin
         Break
       else
       begin
-        s := s + ' ' + SysUtils.Trim(t);
+        s := s + ' ' + Trim(t);
         Inc(Index);
       end;
     end;
-  Result := AnsiString(TrimRight(s)); // cast
+  Result := TrimRight(s);
 end;
 
 {==============================================================================}

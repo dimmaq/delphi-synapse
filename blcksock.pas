@@ -1487,33 +1487,33 @@ type
    By this class is defined common properties.}
   TSynaClient = Class(TObject)
   protected
-    FTargetHost: string;
-    FTargetPort: string;
-    FIPInterface: string;
+    FTargetHost: AnsiString;
+    FTargetPort: AnsiString;
+    FIPInterface: AnsiString;
     FTimeout: integer;
-    FUserName: string;
-    FPassword: string;
+    FUserName: AnsiString;
+    FPassword: AnsiString;
   public
     constructor Create;
   published
     {:Specify terget server IP (or symbolic name). Default is 'localhost'.}
-    property TargetHost: string read FTargetHost Write FTargetHost;
+    property TargetHost: AnsiString read FTargetHost Write FTargetHost;
 
     {:Specify terget server port (or symbolic name).}
-    property TargetPort: string read FTargetPort Write FTargetPort;
+    property TargetPort: AnsiString read FTargetPort Write FTargetPort;
 
     {:Defined local socket address. (outgoing IP address). By default is used
      '0.0.0.0' as wildcard for default IP.}
-    property IPInterface: string read FIPInterface Write FIPInterface;
+    property IPInterface: AnsiString read FIPInterface Write FIPInterface;
 
     {:Specify default timeout for socket operations.}
     property Timeout: integer read FTimeout Write FTimeout;
 
     {:If protocol need user authorization, then fill here username.}
-    property UserName: string read FUserName Write FUserName;
+    property UserName: AnsiString read FUserName Write FUserName;
 
     {:If protocol need user authorization, then fill here password.}
-    property Password: string read FPassword Write FPassword;
+    property Password: AnsiString read FPassword Write FPassword;
   end;
 
 var
