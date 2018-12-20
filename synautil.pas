@@ -397,38 +397,38 @@ var
 implementation
 
 uses
-  {$IFDEF UNICODE}AnsiStrings,{$ENDIF}
+  {$IFDEF UNICODE}AnsiStrings, {$ENDIF}StrUtils,
   //
   AcedCommon, AcedStrings;
 
 function Pos(const ASub, AStr: AnsiString): Integer;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}PosEx(ASub, AStr)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}StrUtils.{$ENDIF}PosEx(ASub, AStr)
 end;
 
 function StrLComp(const Str1, Str2: PAnsiChar; MaxLen: Cardinal): Integer;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}StrLComp(Str1, Str2, MaxLen)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}SysUtils.{$ENDIF}StrLComp(Str1, Str2, MaxLen)
 end;
 
 function StrLCopy(Dest: PAnsiChar; const Source: PAnsiChar; MaxLen: Cardinal): PAnsiChar;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}StrLCopy(Dest, Source, MaxLen)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}SysUtils.{$ENDIF}StrLCopy(Dest, Source, MaxLen)
 end;
 
 function UpperCase(const S: AnsiString): AnsiString;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}UpperCase(S)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}SysUtils.{$ENDIF}UpperCase(S)
 end;
 
 function LowerCase(const S: AnsiString): AnsiString;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}LowerCase(S)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}SysUtils.{$ENDIF}LowerCase(S)
 end;
 
 function Format(const Format: AnsiString; const Args: array of const): AnsiString;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}Format(Format, Args)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}SysUtils.{$ENDIF}Format(Format, Args)
 end;
 
 function FormatDateTime(const Format: string; const DateTime: TDateTime): AnsiString;
@@ -449,7 +449,7 @@ end;
 
 function Trim(const S: AnsiString): AnsiString;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}Trim(S)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}SysUtils.{$ENDIF}Trim(S)
 end;
 
 function IntToStr(const I: Integer): AnsiString;
@@ -477,7 +477,7 @@ end;
 
 function LastDelimiter(const Delimiters, S: AnsiString): Integer;
 begin
-  Result := {$IFDEF UNICODE}AnsiStrings.{$ENDIF}LastDelimiter(Delimiters, S)
+  Result := {$IFDEF UNICODE}AnsiStrings.{$ELSE}SysUtils.{$ENDIF}LastDelimiter(Delimiters, S)
 end;
 
 {==============================================================================}
@@ -1989,6 +1989,8 @@ end;
 {==============================================================================}
 
 function NormalizeHeader(Value: TAnsiStrings; var Index: Integer): AnsiString;
+const
+  CHS = [' ', '"', ':', '='];
 var
   s, t: AnsiString;
   n: Integer;
@@ -2004,7 +2006,7 @@ begin
       for n := 1 to Length(t) do
         if t[n] = #9 then
           t[n] := ' ';
-      if not CharInSet(t[1], [' ', '"', ':', '=']) then
+      if not ({$IFDEF UNICODE}CharInSet(t[1], CHS){$ELSE}t[1] in CHS{$ENDIF}) then
         Break
       else
       begin
