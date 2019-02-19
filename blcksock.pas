@@ -3354,7 +3354,7 @@ var
   Buf: AnsiString;
   n: integer;
 begin
-{$IFNDEF VER320}
+{$IFNDEF RTL320_UP}
   Result := False;
 {$ENDIF}
   FUsingSocks := False;
