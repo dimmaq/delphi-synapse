@@ -201,7 +201,7 @@ type
   {:Procedural type for OnStatus event. Sender is calling TBlockSocket object,
    Reason is one of set Status events and value is optional data.}
   THookSocketStatus = procedure(Sender: TObject; Reason: THookSocketReason;
-    const Value: String) of object;
+    const Value: string) of object;
 
   {:This procedural type is used for DataFilter hooks.}
   THookDataFilter = procedure(Sender: TObject; var Value: AnsiString) of object;
@@ -2600,7 +2600,7 @@ end;
 
 function TBlockSocket.PeekByte(Timeout: Integer): Byte;
 var
-  s: string;
+  s: AnsiString;
 begin
  {$IFNDEF CIL}
   Result := 0;
