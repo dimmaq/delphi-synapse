@@ -478,7 +478,8 @@ begin
   if FKeepAlive then
   begin
     FHeaders.Insert(0, pp + 'Connection: keep-alive');
-    FHeaders.Insert(0, 'Keep-Alive: ' + IntToStr(FKeepAliveTimeout));
+    if FKeepAliveTimeout <> -1 then
+      FHeaders.Insert(0, 'Keep-Alive: ' + IntToStr(FKeepAliveTimeout));
   end
   else
     FHeaders.Insert(0, pp + 'Connection: close');
