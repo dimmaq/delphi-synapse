@@ -1419,6 +1419,9 @@ begin
   else
     sURL := URL;
   s := UpperCase(Prot);
+  if s = 'HTTP' then
+    Port := '80'
+  else
   if s = 'HTTPS' then
     Port := '443'
   else
