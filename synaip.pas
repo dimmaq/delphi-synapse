@@ -80,10 +80,10 @@ function StrToIp6(value: AnsiString): TIp6Bytes;
 function Ip6ToStr(value: TIp6Bytes): AnsiString;
 
 {:Convert IPv4 address from their string form to binary.}
-function StrToIp(value: AnsiString): integer;
+function StrToIp(value: AnsiString): Cardinal;
 
 {:Convert IPv4 address from binary to string form.}
-function IpToStr(value: integer): AnsiString;
+function IpToStr(value: Cardinal): AnsiString;
 
 {:Convert IPv4 address to reverse form.}
 function ReverseIP(Value: AnsiString): AnsiString;
@@ -199,10 +199,10 @@ end;
 
 {==============================================================================}
 
-function StrToIp(value: AnsiString): integer;
+function StrToIp(value: AnsiString): Cardinal;
 var
   s: AnsiString;
-  i, x: Integer;
+  i, x: Cardinal;
 begin
   Result := 0;
   for x := 0 to 3 do
@@ -215,7 +215,7 @@ end;
 
 {==============================================================================}
 
-function IpToStr(value: integer): AnsiString;
+function IpToStr(value: Cardinal): AnsiString;
 var
   x1, x2: word;
   y1, y2: byte;
