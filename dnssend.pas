@@ -433,7 +433,8 @@ begin
         end;
     end;
   if R <> '' then
-    Info.Add(RName + ',' + IntToStr(RType) + ',' + IntToStr(ttl) + ',' + R);
+    Info.Add(string(RName + ',' + IntToStr(RType) + ',' + IntToStr(ttl) + ',' + R)); // cast
+    //TODO: ansi
   if QType = RType then
     Result := R;
 end;
@@ -487,7 +488,8 @@ begin
         begin
           s := DecodeResource(i, FAnswerInfo, QType);
           if s <> '' then
-            Reply.Add(s);
+            Reply.Add(string(s));  // cast
+          //TODO: ansi
         end;
       if (nscount > 0) and (Length(Buf) > i) then // decode nameserver info
         for n := 1 to nscount do
@@ -574,7 +576,8 @@ begin
       { normalize preference number to 5 digits }
       for n := 0 to t.Count - 1 do
       begin
-        x := Pos(',', t[n]);
+          //TODO: ansi
+        x := Pos(',', AnsiString(t[n])); // cast
         if x > 0 then
           for m := 1 to 6 - x do
             t[n] := '0' + t[n];
@@ -584,7 +587,8 @@ begin
       { result is sorted list without preference numbers }
       for n := 0 to t.Count - 1 do
       begin
-        x := Pos(',', t[n]);
+          //TODO: ansi
+        x := Pos(',', AnsiString(t[n]));  // cast
         Servers.Add(Copy(t[n], x + 1, Length(t[n]) - x));
       end;
       Result := True;
