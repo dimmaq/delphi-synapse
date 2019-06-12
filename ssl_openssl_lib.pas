@@ -84,6 +84,7 @@ uses
   System.Runtime.InteropServices,
   System.Text,
 {$ENDIF}
+  SysUtils,
   Classes,
   synafpc,
 {$IFNDEF MSWINDOWS}
@@ -1888,7 +1889,10 @@ begin
       Result := TRUE;
       exit;
     end;
-  {/pf}  
+  {/pf}
+  Result := False;
+  if SSLCS = nil then
+    Exit;  
   SSLCS.Enter;
   try
     if not IsSSLloaded then
@@ -2089,6 +2093,10 @@ end;
 
 function DestroySSLInterface: Boolean;
 begin
+  Result := False;
+  if SSLCS = nil then
+    Exit;
+
   SSLCS.Enter;
   try
     if IsSSLLoaded then
@@ -2242,7 +2250,7 @@ begin
 {$IFNDEF CIL}
   DestroySSLInterface;
 {$ENDIF}
-  SSLCS.Free;
+  FreeAndNil(SSLCS);
 end;
 
 end.
