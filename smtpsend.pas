@@ -84,7 +84,7 @@ type
     FLastCmdData: AnsiString;
     //---
     FResultCode: Integer;
-    FResultString: string;
+    FResultString: AnsiString;
     FFullResult: TStringList;
     FESMTPcap: TStringList;
     FESMTP: Boolean;
@@ -94,10 +94,10 @@ type
     FEnhCode1: Integer;
     FEnhCode2: Integer;
     FEnhCode3: Integer;
-    FSystemName: string;
+    FSystemName: AnsiString;
     FAutoTLS: Boolean;
     FFullSSL: Boolean;
-    procedure EnhancedCode(const Value: string);
+    procedure EnhancedCode(const Value: AnsiString);
     function ReadResult: Integer;
     function AuthLogin: Boolean;
     function AuthCram: Boolean;
@@ -110,8 +110,8 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function SendCmd(const AOut: string; const AResponse: SmallInt = -1): SmallInt; overload;
-    function SendCmd(const AOut: string; const AResponse: array of SmallInt): SmallInt; overload;
+    function SendCmd(const AOut: AnsiString; const AResponse: SmallInt = -1): SmallInt; overload;
+    function SendCmd(const AOut: AnsiString; const AResponse: array of SmallInt): SmallInt; overload;
 
     //---
     procedure ClearResult;
@@ -160,11 +160,11 @@ type
 
      If size not 0 and remote server can handle SIZE parameter, append SIZE
      parameter to request. If all OK, result is @true, else result is @false.}
-    function MailFrom(const Value, ADop: string; Size: Integer = 0): Boolean;
+    function MailFrom(const Value, ADop: AnsiString; Size: Integer = 0): Boolean;
 
     {:Send RCPT TO SMTP command for set receiver e-mail address. It cannot be an
      empty string. If all OK, result is @true, else result is @false.}
-    function MailTo(const Value: string): Boolean;
+    function MailTo(const Value: AnsiString): Boolean;
 
     {:Send DATA SMTP command and transmit message data. If all OK, result is
      @true, else result is @false.}
@@ -172,21 +172,21 @@ type
 
     {:Send ETRN SMTP command for start sending of remote queue for domain in
      Value. If all OK, result is @true, else result is @false.}
-    function Etrn(const Value: string): Boolean;
+    function Etrn(const Value: AnsiString): Boolean;
 
     {:Send VRFY SMTP command for check receiver e-mail address. It cannot be
      an empty string. If all OK, result is @true, else result is @false.}
-    function Verify(const Value: string): Boolean;
+    function Verify(const Value: AnsiString): Boolean;
 
     {:Call STARTTLS command for upgrade connection to SSL/TLS mode.}
     function StartTLS: Boolean;
 
     {:Return string descriptive text for enhanced result codes stored in
      @link(EnhCode1), @link(EnhCode2) and @link(EnhCode3).}
-    function EnhCodeString: string;
+    function EnhCodeString: AnsiString;
 
     {:Try to find specified capability in ESMTP response.}
-    function FindCap(const Value: string): string;
+    function FindCap(const Value: AnsiString): AnsiString;
 
     //---
     property LastCmd: AnsiString read FLastCmd;
@@ -200,7 +200,7 @@ type
 
     {:result string of last SMTP command (begin with string representation of
      result code).}
-    property ResultString: string read FResultString;
+    property ResultString: AnsiString read FResultString;
 
     {:All result strings of last SMTP command (result is maybe multiline!).}
     property FullResult: TStringList read FFullResult;
@@ -236,7 +236,7 @@ type
 
     {:name of our system used in HELO and EHLO command. Implicit value is
      internet address of your machine.}
-    property SystemName: string read FSystemName Write FSystemName;
+    property SystemName: AnsiString read FSystemName Write FSystemName;
 
     {:If is set to true, then upgrade to SSL/TLS mode if remote server support it.}
     property AutoTLS: Boolean read FAutoTLS Write FAutoTLS;
@@ -262,8 +262,8 @@ type
 
  If you need use different port number then standard, then add this port number
  to SMTPhost after colon. (i.e. '127.0.0.1:1025')}
-function SendToRaw(const MailFrom, MailTo, SMTPHost: string;
-  const MailData: TStrings; const Username, Password: string): Boolean;
+function SendToRaw(const MailFrom, MailTo, SMTPHost: AnsiString;
+  const MailData: TStrings; const Username, Password: AnsiString): Boolean;
 
 {:A very useful function and example of its use would be found in the TSMTPsend
  object. Send "Maildata" (text of e-mail without any SMTP headers!) from
@@ -276,7 +276,7 @@ function SendToRaw(const MailFrom, MailTo, SMTPHost: string;
 
  If you need use different port number then standard, then add this port number
  to SMTPhost after colon. (i.e. '127.0.0.1:1025')}
-function SendTo(const MailFrom, MailTo, Subject, SMTPHost: string;
+function SendTo(const MailFrom, MailTo, Subject, SMTPHost: AnsiString;
   const MailData: TStrings): Boolean;
 
 {:A very useful function and example of its use would be found in the TSMTPsend
@@ -291,8 +291,8 @@ function SendTo(const MailFrom, MailTo, Subject, SMTPHost: string;
 
  If you need use different port number then standard, then add this port number
  to SMTPhost after colon. (i.e. '127.0.0.1:1025')}
-function SendToEx(const MailFrom, MailTo, Subject, SMTPHost: string;
-  const MailData: TStrings; const Username, Password: string): Boolean;
+function SendToEx(const MailFrom, MailTo, Subject, SMTPHost: AnsiString;
+  const MailData: TStrings; const Username, Password: AnsiString): Boolean;
 
 implementation
 
@@ -325,9 +325,9 @@ begin
     FOnAnswerEvent(Self)
 end;
 
-procedure TSMTPSend.EnhancedCode(const Value: string);
+procedure TSMTPSend.EnhancedCode(const Value: AnsiString);
 var
-  s, t: string;
+  s, t: AnsiString;
   e1, e2, e3: Integer;
 begin
   FEnhCode1 := 0;
@@ -368,7 +368,7 @@ end;
 
 function TSMTPSend.ReadResult: Integer;
 var
-  s: string;
+  s: AnsiString;
 begin
   Result := 0;
   FFullResult.Clear;
@@ -378,11 +378,11 @@ begin
       FResultString := s
     else
       FResultString := FResultString + #13#10 + s;
-    FFullResult.Add(s);
+    FFullResult.Add(string(s));
     if FSock.LastError <> 0 then
       Break;
   until Pos('-', s) <> 4;
-  s := FFullResult[0];
+  s := Ansistring(FFullResult[0]);
   if Length(s) >= 3 then
     Result := StrToIntDef(Copy(s, 1, 3), 0);
   FResultCode := Result;
@@ -471,8 +471,8 @@ end;
 function TSMTPSend.Login: Boolean;
 var
   n: Integer;
-  auths: string;
-  s: string;
+  auths: AnsiString;
+  s: AnsiString;
 begin
   Result := False;
 //-------------------------------
@@ -560,7 +560,7 @@ end;
 procedure TSMTPSend.ParseESmtp;
 var
   n: Integer;
-  z: AnsiString;
+  z: string;
 begin
   FESMTPcap.Clear;
   if ESMTP then
@@ -571,9 +571,9 @@ begin
     end;
 end;
 
-function TSMTPSend.MailFrom(const Value,ADop: string; Size: Integer): Boolean;
+function TSMTPSend.MailFrom(const Value, ADop: AnsiString; Size: Integer): Boolean;
 var
-  s: string;
+  s: AnsiString;
 begin
   s := 'MAIL FROM: <' + Value + '>';
   if FESMTPsize and (Size > 0) then
@@ -584,7 +584,7 @@ begin
   Result := ReadResult div 100 = 2;
 end;
 
-function TSMTPSend.MailTo(const Value: string): Boolean;
+function TSMTPSend.MailTo(const Value: AnsiString): Boolean;
 begin
   FSock.SendString('RCPT TO: <' + Value + '>' + CRLF);
   Result := ReadResult = 250;
@@ -593,8 +593,8 @@ end;
 function TSMTPSend.MailData(const Value: TStrings): Boolean;
 var
   n: Integer;
-  s: string;
-  t: string;
+  s: AnsiString;
+  t: AnsiString;
   x: integer;
 begin
   Result := False;
@@ -605,7 +605,7 @@ begin
   x := 1500;
   for n := 0 to Value.Count - 1 do
   begin
-    s := Value[n];
+    s := AnsiString(Value[n]);
     if Length(s) >= 1 then
       if s[1] = '.' then
         s := '.' + s;
@@ -622,7 +622,7 @@ begin
   Result := ReadResult div 100 = 2;
 end;
 
-function TSMTPSend.Etrn(const Value: string): Boolean;
+function TSMTPSend.Etrn(const Value: AnsiString): Boolean;
 var
   x: Integer;
 begin
@@ -631,7 +631,7 @@ begin
   Result := (x >= 250) and (x <= 259);
 end;
 
-function TSMTPSend.Verify(const Value: string): Boolean;
+function TSMTPSend.Verify(const Value: AnsiString): Boolean;
 var
   x: Integer;
 begin
@@ -640,7 +640,7 @@ begin
   Result := (x >= 250) and (x <= 259);
 end;
 
-function TSMTPSend.SendCmd(const AOut: string;
+function TSMTPSend.SendCmd(const AOut: AnsiString;
   const AResponse: SmallInt): SmallInt;
 begin
   if AResponse = -1 then begin
@@ -650,7 +650,7 @@ begin
   end;
 end;
 
-function TSMTPSend.SendCmd(const AOut: string;
+function TSMTPSend.SendCmd(const AOut: AnsiString;
   const AResponse: array of SmallInt): SmallInt;
 var
   j : Integer;
@@ -777,7 +777,7 @@ var
 begin
   for j:=0 to (AEml.Count-1) do
   begin
-    z := AEml[j];
+    z := AnsiString(AEml[j]);
     if z='.' then
       z := '..';
     Sock.SendString(z+CRLF);
@@ -806,7 +806,7 @@ begin
 end;
 
 function TSMTPSend.SmtpAfterHelo: Boolean;
-var s: string;
+var s: AnsiString;
 begin
   Result := True;
   if FESMTP then
@@ -835,9 +835,9 @@ begin
   end;
 end;
 
-function TSMTPSend.EnhCodeString: string;
+function TSMTPSend.EnhCodeString: AnsiString;
 var
-  s, t: string;
+  s, t: AnsiString;
 begin
   s := IntToStr(FEnhCode2) + '.' + IntToStr(FEnhCode3);
   t := '';
@@ -897,28 +897,28 @@ begin
   Result := s + t;
 end;
 
-function TSMTPSend.FindCap(const Value: string): string;
+function TSMTPSend.FindCap(const Value: AnsiString): AnsiString;
 var
   n: Integer;
-  s: string;
+  s: AnsiString;
 begin
   s := UpperCase(Value);
   Result := '';
   for n := 0 to FESMTPcap.Count - 1 do
-    if Pos(s, UpperCase(FESMTPcap[n])) = 1 then
+    if Pos(s, UpperCase(AnsiString(FESMTPcap[n]))) = 1 then
     begin
-      Result := FESMTPcap[n];
+      Result := AnsiString(FESMTPcap[n]);
       Break;
     end;
 end;
 
 {==============================================================================}
 
-function SendToRaw(const MailFrom, MailTo, SMTPHost: string;
-  const MailData: TStrings; const Username, Password: string): Boolean;
+function SendToRaw(const MailFrom, MailTo, SMTPHost: AnsiString;
+  const MailData: TStrings; const Username, Password: AnsiString): Boolean;
 var
   SMTP: TSMTPSend;
-  s, t: string;
+  s, t: AnsiString;
 begin
   Result := False;
   SMTP := TSMTPSend.Create;
@@ -958,8 +958,8 @@ begin
   end;
 end;
 
-function SendToEx(const MailFrom, MailTo, Subject, SMTPHost: string;
-  const MailData: TStrings; const Username, Password: string): Boolean;
+function SendToEx(const MailFrom, MailTo, Subject, SMTPHost: AnsiString;
+  const MailData: TStrings; const Username, Password: AnsiString): Boolean;
 var
   t: TStrings;
 begin
@@ -968,17 +968,17 @@ begin
     t.Assign(MailData);
     t.Insert(0, '');
     t.Insert(0, 'X-mailer: Synapse - Delphi & Kylix TCP/IP library by Lukas Gebauer');
-    t.Insert(0, 'Subject: ' + Subject);
-    t.Insert(0, 'Date: ' + Rfc822DateTime(now));
-    t.Insert(0, 'To: ' + MailTo);
-    t.Insert(0, 'From: ' + MailFrom);
+    t.Insert(0, 'Subject: ' + string(Subject));
+    t.Insert(0, 'Date: ' + string(Rfc822DateTime(now)));
+    t.Insert(0, 'To: ' + string(MailTo));
+    t.Insert(0, 'From: ' + string(MailFrom));
     Result := SendToRaw(MailFrom, MailTo, SMTPHost, t, Username, Password);
   finally
     t.Free;
   end;
 end;
 
-function SendTo(const MailFrom, MailTo, Subject, SMTPHost: string;
+function SendTo(const MailFrom, MailTo, Subject, SMTPHost: AnsiString;
   const MailData: TStrings): Boolean;
 begin
   Result := SendToEx(MailFrom, MailTo, Subject, SMTPHost, MailData, '', '');
