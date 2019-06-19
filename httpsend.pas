@@ -97,6 +97,7 @@ type
     FProxyPort: AnsiString;
     FProxyUser: AnsiString;
     FProxyPass: AnsiString;
+    FResultStatus: AnsiString;
     FResultCode: Integer;
     FResultString: AnsiString;
     FUserAgent: AnsiString;
@@ -201,6 +202,8 @@ type
     {:Here you can specify custom User-Agent identification.
      Default: 'Mozilla/4.0 (compatible; Synapse)'}
     property UserAgent: AnsiString read FUserAgent Write FUserAgent;
+
+    property ResultStatus: AnsiString read FResultStatus;
 
     {:Operation result code after successful @link(HTTPMethod) method.}
     property ResultCode: Integer read FResultCode;
@@ -334,6 +337,7 @@ procedure THTTPSend.DecodeStatus(const Value: AnsiString);
 var
   s, su: AnsiString;
 begin
+  FResultStatus := Value;
   s := Trim(SeparateRight(Value, ' '));
   su := Trim(SeparateLeft(s, ' '));
   FResultCode := StrToIntDef(su, 0);
@@ -409,6 +413,7 @@ var
 begin
   {initial values}
   Result := False;
+  FResultStatus := '';
   FResultCode := 500;
   FResultString := '';
   FDownloadSize := 0;
