@@ -139,6 +139,9 @@ var
   DLL_LIBCRYPTO_1_1: string = 'libcrypto-1_1.dll';
   DLL_LIBSSL_1_1: string = 'libssl-1_1.dll';
 
+  DLL_LIBCRYPTO_3: string = 'libcrypto-3.dll';
+  DLL_LIBSSL_3: string = 'libssl-3.dll';
+
   {$ENDIF}
 {$ENDIF}
 
@@ -1878,6 +1881,19 @@ begin
 {$ENDIF}
 end;
 
+function try_load_dll(ssl, crypto: string): Boolean;
+begin
+  SSLUtilHandle := LoadLib(crypto);
+  SSLLibHandle := LoadLib(ssl);
+  if (SSLUtilHandle = 0) or (SSLLibHandle = 0) then
+  begin
+    FreeLibrary(SSLLibHandle);
+    FreeLibrary(SSLUtilHandle);
+    Exit(False)
+  end;
+  Exit(True)
+end;
+
 function InitSSLInterface: Boolean;
 var
   s: string;
@@ -1903,19 +1919,14 @@ begin
 {$ELSE}
 
     {$IFDEF MSWINDOWS}
-      SSLUtilHandle := LoadLib(DLL_LIBCRYPTO_1_1);
-      SSLLibHandle := LoadLib(DLL_LIBSSL_1_1);
-
-      if (SSLUtilHandle = 0) or (SSLLibHandle = 0) then
-      begin
-        FreeLibrary(SSLLibHandle);
-        FreeLibrary(SSLUtilHandle);
-        
-        SSLUtilHandle := LoadLib(DLLUtilName);
-        SSLLibHandle := LoadLib(DLLSSLName);
-        if (SSLLibHandle = 0) then
-          SSLLibHandle := LoadLib(DLLSSLName2);
-      end;
+      if not try_load_dll(DLL_LIBSSL_3, DLL_LIBCRYPTO_3) then
+        if not try_load_dll(DLL_LIBSSL_1_1, DLL_LIBCRYPTO_1_1) then
+        begin
+          SSLUtilHandle := LoadLib(DLLUtilName);
+          SSLLibHandle := LoadLib(DLLSSLName);
+          if (SSLLibHandle = 0) then
+            SSLLibHandle := LoadLib(DLLSSLName2);
+        end;
     {$ELSE}
       SSLUtilHandle := LoadLib(DLLUtilName);
       SSLLibHandle := LoadLib(DLLSSLName);
