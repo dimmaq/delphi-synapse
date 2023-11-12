@@ -278,6 +278,8 @@ type
     ErrorMessage: string;
   end;
 
+  ESynaSerErrorBreakEvent = class (ESynaSerError);
+
   {:@abstract(Main class implementing all communication routines)}
   TBlockSerial = class(TObject)
   protected
@@ -310,6 +312,7 @@ type
     FAtTimeout: integer;
     FInterPacketTimeout: Boolean;
     FComNr: integer;
+    FBreakEvent: THandle;
 {$IFDEF MSWINDOWS}
     FPortAddr: Word;
     function CanEvent(Event: dword; Timeout: integer): boolean;
@@ -330,7 +333,7 @@ type
     procedure GetComNr(Value: string); virtual;
     function PreTestFailing: boolean; virtual;{HGJ}
     function TestCtrlLine: Boolean; virtual;
-{$IFDEF UNIX}    
+{$IFDEF UNIX}
     procedure DcbToTermios(const dcb: TDCB; var term: termios); virtual;
     procedure TermiosToDcb(const term: termios; var dcb: TDCB); virtual;
     function ReadLockfile: integer; virtual;
@@ -739,6 +742,9 @@ type
     {:If @true (default), then all timeouts is timeout between two characters.
      If @False, then timeout is overall for whoole reading operation.}
     property InterPacketTimeout: Boolean read FInterPacketTimeout Write FInterPacketTimeout;
+
+    {:For safe wait stop}
+    property BreakEvent: THandle read FBreakEvent write FBreakEvent; 
   end;
 
 {:Returns list of existing computer serial ports. Working properly only in Windows!}
@@ -1011,6 +1017,7 @@ function TBlockSerial.SendBuffer(buffer: pointer; length: integer): integer;
 var
   Overlapped: TOverlapped;
   x, y, Err: DWord;
+  ho: PWOHandleArray;
 {$ENDIF}
 begin
   Result := 0;
@@ -1033,7 +1040,21 @@ begin
     y := GetLastError;
   if y = ERROR_IO_PENDING then
   begin
-    x := WaitForSingleObject(FHandle, FDeadlockTimeout);
+    if FBreakEvent <> 0 then 
+    begin
+      GetMem(ho, SizeOf(THandle) * 2);
+      try
+        ho[0] := Fhandle;
+        ho[1] := FBreakEvent;
+        x := WaitForMultipleObjects(2, ho, False, FDeadlockTimeout);
+      finally
+        FreeMem(ho);
+      end;
+      if x = WAIT_OBJECT_0 + 1 then
+        raise ESynaSerErrorBreakEvent.Create('Break event was fired');
+    end
+    else
+      x := WaitForSingleObject(FHandle, FDeadlockTimeout);
     if x = WAIT_TIMEOUT then
     begin
       PurgeComm(FHandle, PURGE_TXABORT);
@@ -1137,6 +1158,7 @@ begin
 var
   Overlapped: TOverlapped;
   x, y, Err: DWord;
+  ho: PWOHandleArray;
 begin
   Result := 0;
   if PreTestFailing then   {HGJ}
@@ -1149,7 +1171,21 @@ begin
     y := GetLastError;
   if y = ERROR_IO_PENDING then
   begin
-    x := WaitForSingleObject(FHandle, FDeadlockTimeout);
+    if FBreakEvent <> 0 then
+    begin
+      GetMem(ho, SizeOf(THandle) * 2);
+      try
+        ho[0] := Fhandle;
+        ho[1] := FBreakEvent;
+        x := WaitForMultipleObjects(2, ho, False, FDeadlockTimeout);
+      finally
+        FreeMem(ho);
+      end;
+      if x = WAIT_OBJECT_0 + 1 then
+        raise ESynaSerErrorBreakEvent.Create('Break event was fired');
+    end
+    else
+      x := WaitForSingleObject(FHandle, FDeadlockTimeout);
     if x = WAIT_TIMEOUT then
     begin
       PurgeComm(FHandle, PURGE_RXABORT);
@@ -1767,6 +1803,8 @@ var
   ex: DWord;
   y: Integer;
   Overlapped: TOverlapped;
+  ho: PWOHandleArray;
+  x: Integer;
 begin
   FillChar(Overlapped, Sizeof(Overlapped), 0);
   Overlapped.hEvent := CreateEvent(nil, True, False, nil);
@@ -1784,7 +1822,24 @@ begin
       if y = ERROR_IO_PENDING then
       begin
         //timedout
-        WaitForSingleObject(Overlapped.hEvent, Timeout);
+        if FBreakEvent <> 0 then
+        begin
+          GetMem(ho, SizeOf(THandle) * 2);
+          try
+            ho[0] := Overlapped.hEvent;
+            ho[1] := FBreakEvent;
+            x := WaitForMultipleObjects(2, ho, False, FDeadlockTimeout);
+          finally
+            FreeMem(ho);
+          end;
+          if x = WAIT_OBJECT_0 + 1 then
+          begin
+            Result := False; // supress stupid(?) warning
+            raise ESynaSerErrorBreakEvent.Create('Break event was fired');
+          end;
+        end
+        else
+          WaitForSingleObject(Overlapped.hEvent, Timeout);
         SetCommMask(FHandle, 0);
         GetOverlappedResult(FHandle, Overlapped, DWord(y), True);
       end;
